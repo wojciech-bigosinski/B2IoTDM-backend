@@ -6,7 +6,7 @@ contract marketplace {
     constructor() {
         owner = msg.sender;
     }
-
+    
     mapping(address => bool) registeredPublishers;
     mapping(address => string) publisherName;
     mapping(address => uint256) publisherScore;
@@ -20,5 +20,10 @@ contract marketplace {
         string sample;
         string data;
         string[] dataArray;
+    }
+
+    function registerPublisher(address publisher) public returns(bool)
+    {
+
     }
 }
