@@ -5,20 +5,24 @@ pragma solidity ^0.8.13;
 contract marketplace {
     address owner;
 
-    constructor() {
+    constructor() 
+    {
         owner = msg.sender;
     }
     
-    mapping(address => bool) registeredPublishers;
-    mapping(address => string) publisherName;
-    mapping(address => uint256) publisherScore;
+    mapping(address => uint256) internal publishersStakes;
+    mapping(address => uint256) publishersOffers;
+    mapping(address => uint256) publishersRatings;
+    mapping(address => uint256) publishersNumberOfRatings;
+    mapping(address => string) publishersNames;
+    
 
-    struct offer {
+    struct offer 
+    {
         address publisher;
         uint256 id;
         string metadata;
-        mapping(address => bool) boughtAccess;
-        mapping(address => string) key;
+        mapping(address => purchase) boughtAccess;
         uint256[] reviews;
         uint256 price;
         string sample;
@@ -26,11 +30,33 @@ contract marketplace {
         string[] dataArray;
     }
 
+    struct purchase
+    {
+        address buyer;
+        address publisher;
+        uint256 offerId;
+        uint timestamp;
+        string key;
+    }
+
     offer[] offers;
 
-    function registerPublisher() public payable returns(bool)
-    {
+    error NotEnoughEther();
 
+    function registerPublisher() public payable
+    {
+        if (msg.value < 1e15) revert NotEnoughEther();
+        address publisher = msg.sender;
+        publishersStakes[publisher] += msg.value;
+    }
+
+    function unregisterPublisher() public 
+    {
+        address publisher = msg.sender;
+        uint256 publisherStake = publishersStakes[publisher];
+        if (publisherStake == 0) revert NotEnoughEther();
+        publishersStakes[publisher] = 0;
+        payable(msg.sender).transfer(publisherStake);
     }
 
     function setOffer(string memory metadata, uint256 price, string memory sample, string memory data) public returns(bool) 
@@ -53,7 +79,7 @@ contract marketplace {
 
     }
 
-    function setReview(address publisher, uint256 id) public returns(bool)
+    function writeReview(address publisher, uint256 id) public returns(bool)
     {
 
     }
@@ -73,7 +99,7 @@ contract marketplace {
 
     }
 
-    function depositPayment(address publisher, uint256 id) public returns(bool)
+    function depositPayment(address publisher, uint256 id) public payable returns(bool)
     {
 
     }
