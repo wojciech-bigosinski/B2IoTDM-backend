@@ -4,10 +4,12 @@ pragma solidity ^0.8.13;
 
 contract marketplace {
     address owner;
+    uint256 balance;
 
     constructor() 
     {
         owner = msg.sender;
+        balance = 0;
     }
     
     mapping(address => uint256) internal publishersStakes;
@@ -111,6 +113,8 @@ contract marketplace {
         {
             o.rating = (o.rating * o.ratings.length + rating) / (o.ratings.length + 1);
         }
+
+        checkPublisherScore(o.publisher);
     }
 
     modifier checkIfCanReview(uint256 offerId)
@@ -122,12 +126,17 @@ contract marketplace {
 
     function checkPublisherScore(address publisher) internal
     {
-
+        if (publishersRating[publisher] < 20)
+        {
+            slashPublisher(publisher);
+        }
     }
 
     function slashPublisher(address publisher) internal
     {
-
+        uint256 amountSlashed = publishersStakes[publisher] / 2;
+        publishersStakes[publisher] = amountSlashed;
+        balance += amountSlashed;
     }
 
     function depositPayment(address publisher, uint256 id) public payable returns(bool)
