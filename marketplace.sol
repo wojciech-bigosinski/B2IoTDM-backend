@@ -17,19 +17,6 @@ contract marketplace {
     mapping(address => string) publishersNames;
     
 
-    struct offer 
-    {
-        address publisher;
-        uint256 id;
-        string metadata;
-        mapping(address => purchase) boughtAccess;
-        uint256[] reviews;
-        uint256 price;
-        string sample;
-        string data;
-        string[] dataArray;
-    }
-
     struct purchase
     {
         address buyer;
@@ -39,7 +26,22 @@ contract marketplace {
         string key;
     }
 
-    offer[] offers;
+    struct offer 
+    {
+        address publisher;
+        uint256 id;
+        string metadata;
+        mapping(uint => purchase) purchases;
+        uint purchasesSize;
+        uint256[] reviews;
+        uint256 price;
+        string sample;
+        string data;
+        string[] dataArray;
+    }
+
+    mapping(uint => offer) offers;
+    uint offersSize;
 
     error NotEnoughEther();
 
@@ -59,9 +61,20 @@ contract marketplace {
         payable(msg.sender).transfer(publisherStake);
     }
 
-    function setOffer(string memory metadata, uint256 price, string memory sample, string memory data) public returns(bool) 
+    function setOffer(string memory metadata, uint256 price, string memory sample, string memory data) public
     {
-
+        offer storage o = offers[offersSize++];
+        uint256[] memory reviews;
+        string[] memory dataArray;
+        o.publisher = msg.sender;
+        o.id = offersSize;
+        o.metadata = metadata;
+        o.purchasesSize = 0;
+        o.reviews = reviews;
+        o.price = price;
+        o.sample = sample;
+        o.data = data;
+        o.dataArray = dataArray;
     }
 
     function addDataToOffer(uint256 id) public returns(bool) 
