@@ -12,28 +12,28 @@ contract marketplace {
         balance = 0;
     }
     
-    mapping(address => uint256) internal publishersStakes;
+    mapping(address => uint256) public publishersStakes;
     mapping(address => uint256) publishersOffers;
-    mapping(address => uint256) publishersRating;
+    mapping(address => uint256) public publishersRating;
     mapping(address => uint256) publishersNumberOfRatings;
-    mapping(address => string) publishersNames;
+    mapping(address => string) public publishersNames;
     
 
     struct purchase
     {
         address buyer;
-        uint256 offerId;
         uint timestamp;
         string key;
+        uint deposit;
     }
 
     struct offer 
     {
         address publisher;
-        uint256 id;
         string metadata;
         mapping(uint => purchase) purchases;
         uint purchasesSize;
+        mapping(address => uint) purchaseAddress;
         mapping(address => bool) canReview;
         string[] reviews;
         uint[] ratings;
@@ -78,7 +78,6 @@ contract marketplace {
         string[] memory dataArray;
         uint[] memory ratings;
         o.publisher = msg.sender;
-        o.id = offersSize;
         o.metadata = metadata;
         o.purchasesSize = 0;
         o.reviews = reviews;
@@ -100,7 +99,6 @@ contract marketplace {
     function writeReview(uint256 offerId, string memory review, uint rating) public checkIfCanReview(offerId)
     {
         offer storage o = offers[offerId];
-        
         o.reviews.push(review);
         o.ratings.push(rating);
         publishersRating[o.publisher] = (publishersRating[o.publisher] * publishersNumberOfRatings[o.publisher] + rating) / (publishersNumberOfRatings[o.publisher] + 1);
@@ -139,19 +137,33 @@ contract marketplace {
         balance += amountSlashed;
     }
 
-    function depositPayment(address publisher, uint256 id) public payable returns(bool)
+    function depositPayment(uint256 offerId) public payable
     {
-
+        offer storage o = offers[offerId];
+        purchase storage p = o.purchases[o.purchasesSize++];
+        p.buyer = msg.sender;
+        p.timestamp = block.timestamp;
+        p.deposit = msg.value;
+        o.purchaseAddress[msg.sender] = o.purchasesSize;
     }
 
-    function sendKey(address buyer, string memory key) public returns(bool)
+    function sendKey(uint256 offerId, address buyer, string memory key) public
     {
-
+        offer storage o = offers[offerId];
+        if (msg.sender != o.publisher) revert NotThePublisher();
+        uint256 purchaseId = o.purchaseAddress[buyer];
+        purchase storage p = o.purchases[purchaseId];
+        p.key = key;
+        uint deposit = p.deposit;
+        payable(msg.sender).transfer(deposit);
     }
 
-    function readKey() public view returns(string memory)
+    function readKey(uint256 offerId) public view returns(string memory)
     {
-
+        offer storage o = offers[offerId];
+        uint256 purchaseId = o.purchaseAddress[msg.sender];
+        purchase storage p = o.purchases[purchaseId];
+        return p.key;
     }
 
 }
