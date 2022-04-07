@@ -113,6 +113,7 @@ contract marketplace {
         }
 
         checkPublisherScore(o.publisher);
+        o.canReview[msg.sender] = false;
     }
 
     modifier checkIfCanReview(uint256 offerId)
@@ -145,7 +146,8 @@ contract marketplace {
         p.buyer = msg.sender;
         p.timestamp = block.timestamp;
         p.deposit = msg.value;
-        o.purchaseAddress[msg.sender] = o.purchasesSize;
+        o.purchaseAddress[msg.sender] = o.purchasesSize - 1;
+        o.canReview[msg.sender] = true;
     }
 
     function sendKey(uint256 offerId, address buyer, string memory key) public
