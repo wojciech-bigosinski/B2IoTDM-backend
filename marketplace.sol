@@ -157,8 +157,8 @@ contract marketplace {
         uint256 purchaseId = o.purchaseAddress[buyer];
         purchase storage p = o.purchases[purchaseId];
         p.key = key;
-        p.deposit = 0;
         uint deposit = p.deposit;
+        p.deposit = 0;
         payable(msg.sender).transfer(deposit);
     }
 
