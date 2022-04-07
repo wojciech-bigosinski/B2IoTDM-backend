@@ -52,6 +52,8 @@ contract marketplace {
     error NotEnoughStake();
     error CannotReview();
 
+    event Deposit(address indexed buyer, uint256 indexed offerId);
+
     function registerPublisher(string memory publisherName) public payable
     {
         if (msg.value < 1e15) revert NotEnoughEther();
@@ -148,6 +150,7 @@ contract marketplace {
         p.deposit = msg.value;
         o.purchaseAddress[msg.sender] = o.purchasesSize - 1;
         o.canReview[msg.sender] = true;
+        emit Deposit(msg.sender, offerId);
     }
 
     function sendKey(uint256 offerId, address buyer, string memory key) public
