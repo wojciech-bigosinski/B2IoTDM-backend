@@ -12,7 +12,7 @@ contract marketplace {
     
     mapping(address => uint256) internal publishersStakes;
     mapping(address => uint256) publishersOffers;
-    mapping(address => uint256) publishersRatings;
+    mapping(address => uint256) publishersRating;
     mapping(address => uint256) publishersNumberOfRatings;
     mapping(address => string) publishersNames;
     
@@ -20,7 +20,6 @@ contract marketplace {
     struct purchase
     {
         address buyer;
-        address publisher;
         uint256 offerId;
         uint timestamp;
         string key;
@@ -33,23 +32,30 @@ contract marketplace {
         string metadata;
         mapping(uint => purchase) purchases;
         uint purchasesSize;
-        uint256[] reviews;
+        mapping(address => bool) canReview;
+        string[] reviews;
+        uint[] ratings;
+        uint rating;
         uint256 price;
         string sample;
         string data;
         string[] dataArray;
     }
 
-    mapping(uint => offer) offers;
-    uint offersSize;
+    mapping(uint => offer) public offers;
+    uint public offersSize;
 
     error NotEnoughEther();
+    error NotThePublisher();
+    error NotEnoughStake();
+    error CannotReview();
 
-    function registerPublisher() public payable
+    function registerPublisher(string memory publisherName) public payable
     {
         if (msg.value < 1e15) revert NotEnoughEther();
         address publisher = msg.sender;
         publishersStakes[publisher] += msg.value;
+        publishersNames[publisher] = publisherName;
     }
 
     function unregisterPublisher() public 
@@ -63,43 +69,55 @@ contract marketplace {
 
     function setOffer(string memory metadata, uint256 price, string memory sample, string memory data) public
     {
+        if (publishersStakes[msg.sender] < (1e15 * publishersOffers[msg.sender] + 1e15)) revert NotEnoughStake();
         offer storage o = offers[offersSize++];
-        uint256[] memory reviews;
+        publishersOffers[msg.sender]++;
+        string[] memory reviews;
         string[] memory dataArray;
+        uint[] memory ratings;
         o.publisher = msg.sender;
         o.id = offersSize;
         o.metadata = metadata;
         o.purchasesSize = 0;
         o.reviews = reviews;
+        o.ratings = ratings;
+        o.rating = 0;
         o.price = price;
         o.sample = sample;
         o.data = data;
         o.dataArray = dataArray;
     }
 
-    function addDataToOffer(uint256 id) public returns(bool) 
+    function addDataToOffer(uint256 offerId, string memory data) public
     {
-
+        offer storage o = offers[offerId];
+        if (msg.sender != o.publisher) revert NotThePublisher();
+        o.dataArray.push(data);
     }
 
-    function getOffer(address publisher, uint256 id) public view returns(string memory, uint256, string memory, string memory, string[] memory)
+    function writeReview(uint256 offerId, string memory review, uint rating) public checkIfCanReview(offerId)
     {
-
+        offer storage o = offers[offerId];
+        
+        o.reviews.push(review);
+        o.ratings.push(rating);
+        publishersRating[o.publisher] = (publishersRating[o.publisher] * publishersNumberOfRatings[o.publisher] + rating) / (publishersNumberOfRatings[o.publisher] + 1);
+        publishersNumberOfRatings[o.publisher]++;
+        if (o.ratings.length == 0)
+        {
+            o.rating = rating;
+        }
+        else
+        {
+            o.rating = (o.rating * o.ratings.length + rating) / (o.ratings.length + 1);
+        }
     }
 
-    function getOffers() public view returns(string[] memory, uint256[] memory, string[] memory, string[] memory, string[][] memory)
+    modifier checkIfCanReview(uint256 offerId)
     {
-
-    }
-
-    function writeReview(address publisher, uint256 id) public returns(bool)
-    {
-
-    }
-
-    function checkIfCanReview(address publisher, uint256 id) internal returns(bool)
-    {
-
+        offer storage o = offers[offerId];
+        if (o.canReview[msg.sender] != true) revert CannotReview();
+        _;
     }
 
     function checkPublisherScore(address publisher) internal
