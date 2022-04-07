@@ -140,6 +140,7 @@ contract marketplace {
     function depositPayment(uint256 offerId) public payable
     {
         offer storage o = offers[offerId];
+        if (msg.value < o.price) revert NotEnoughEther();
         purchase storage p = o.purchases[o.purchasesSize++];
         p.buyer = msg.sender;
         p.timestamp = block.timestamp;
