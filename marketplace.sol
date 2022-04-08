@@ -33,7 +33,7 @@ contract marketplace {
         string metadata;
         mapping(uint => purchase) purchases;
         uint purchasesSize;
-        mapping(address => uint) purchaseAddress;
+        mapping(address => uint) getPurchaseId;
         mapping(address => bool) canReview;
         string[] reviews;
         uint[] ratings;
@@ -42,6 +42,7 @@ contract marketplace {
         string sample;
         string data;
         string[] dataArray;
+        bool isActive;
     }
 
     mapping(uint => offer) public offers;
@@ -51,6 +52,7 @@ contract marketplace {
     error NotThePublisher();
     error NotEnoughStake();
     error CannotReview();
+    error OfferInactive();
 
     event Deposit(address indexed buyer, uint256 indexed offerId);
 
@@ -89,6 +91,14 @@ contract marketplace {
         o.sample = sample;
         o.data = data;
         o.dataArray = dataArray;
+        o.isActive = true;
+    }
+
+    function deactivateOffer(uint offerId) public
+    {
+        offer storage o = offers[offerId];
+        if (msg.sender != o.publisher) revert NotThePublisher();
+        o.isActive = false;
     }
 
     function addDataToOffer(uint256 offerId, string memory data) public
@@ -96,6 +106,42 @@ contract marketplace {
         offer storage o = offers[offerId];
         if (msg.sender != o.publisher) revert NotThePublisher();
         o.dataArray.push(data);
+    }
+
+    function getOfferPurchases(uint offerId, uint purchaseId) public view returns(purchase memory)
+    {
+        offer storage o = offers[offerId];
+        return(o.purchases[purchaseId]);
+    }
+
+    function getOfferGetPurchaseId(uint offerId, address buyer) public view returns(uint)
+    {
+        offer storage o = offers[offerId];  
+        return(o.getPurchaseId[buyer]);
+    }
+
+    function getOfferCanReview(uint offerId, address buyer) public view returns(bool)
+    {
+        offer storage o = offers[offerId]; 
+        return(o.canReview[buyer]);
+    }
+
+    function getOfferReviews(uint offerId) public view returns(string[] memory)
+    {
+        offer storage o = offers[offerId];
+        return(o.reviews);
+    }
+
+    function getOfferRatings(uint offerId) public view returns(uint[] memory)
+    {
+        offer storage o = offers[offerId];
+        return(o.ratings);
+    }
+
+    function getOfferDataArray(uint offerId) public view returns(string[] memory)
+    {
+        offer storage o = offers[offerId];
+        return(o.reviews);
     }
 
     function writeReview(uint256 offerId, string memory review, uint rating) public checkIfCanReview(offerId)
@@ -143,12 +189,13 @@ contract marketplace {
     function depositPayment(uint256 offerId) public payable
     {
         offer storage o = offers[offerId];
+        if (o.isActive == false) revert OfferInactive();
         if (msg.value < o.price) revert NotEnoughEther();
         purchase storage p = o.purchases[o.purchasesSize++];
         p.buyer = msg.sender;
         p.timestamp = block.timestamp;
         p.deposit = msg.value;
-        o.purchaseAddress[msg.sender] = o.purchasesSize - 1;
+        o.getPurchaseId[msg.sender] = o.purchasesSize - 1;
         o.canReview[msg.sender] = true;
         emit Deposit(msg.sender, offerId);
     }
@@ -157,7 +204,7 @@ contract marketplace {
     {
         offer storage o = offers[offerId];
         if (msg.sender != o.publisher) revert NotThePublisher();
-        uint256 purchaseId = o.purchaseAddress[buyer];
+        uint256 purchaseId = o.getPurchaseId[buyer];
         purchase storage p = o.purchases[purchaseId];
         p.key = key;
         uint deposit = p.deposit;
@@ -168,7 +215,7 @@ contract marketplace {
     function readKey(uint256 offerId) public view returns(string memory)
     {
         offer storage o = offers[offerId];
-        uint256 purchaseId = o.purchaseAddress[msg.sender];
+        uint256 purchaseId = o.getPurchaseId[msg.sender];
         purchase storage p = o.purchases[purchaseId];
         return p.key;
     }
