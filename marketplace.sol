@@ -3,12 +3,10 @@
 pragma solidity ^0.8.13;
 
 contract marketplace {
-    address owner;
-    uint256 balance;
+    uint balance;
 
     constructor() 
     {
-        owner = msg.sender;
         balance = 0;
     }
     
@@ -54,6 +52,8 @@ contract marketplace {
     error CannotReview();
     error OfferInactive();
     error NotRegistered();
+    error NotBought();
+    error NotEnoughTimePassed();
 
     event Deposit(address indexed buyer, uint indexed offerId);
 
@@ -237,7 +237,14 @@ contract marketplace {
 
     function returnDeposit(uint offerId) public
     {
-
+        offer storage o = offers[offerId];
+        uint purchaseId = o.getPurchaseId[msg.sender];
+        purchase storage p = o.purchases[purchaseId];
+        if (p.buyer != msg.sender) revert NotBought();
+        if (block.timestamp <= (p.timestamp + 1 weeks)) revert NotEnoughTimePassed();
+        uint withdrawal = p.deposit;
+        p.deposit = 0;
+        payable(msg.sender).transfer(withdrawal);
     }
 
 }
