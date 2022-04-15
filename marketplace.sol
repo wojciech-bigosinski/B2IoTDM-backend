@@ -12,10 +12,10 @@ contract marketplace {
         balance = 0;
     }
     
-    mapping(address => uint256) public publishersStakes;
-    mapping(address => uint256) publishersOffers;
-    mapping(address => uint256) public publishersRating;
-    mapping(address => uint256) publishersNumberOfRatings;
+    mapping(address => uint) public publishersStakes;
+    mapping(address => uint) publishersOffers;
+    mapping(address => uint) public publishersRating;
+    mapping(address => uint) publishersNumberOfRatings;
     mapping(address => string) public publishersNames;
     
 
@@ -38,7 +38,7 @@ contract marketplace {
         string[] reviews;
         uint[] ratings;
         uint rating;
-        uint256 price;
+        uint price;
         string sample;
         string data;
         string[] dataArray;
@@ -53,8 +53,9 @@ contract marketplace {
     error NotEnoughStake();
     error CannotReview();
     error OfferInactive();
+    error NotRegistered();
 
-    event Deposit(address indexed buyer, uint256 indexed offerId);
+    event Deposit(address indexed buyer, uint indexed offerId);
 
     function registerPublisher(string memory publisherName) public payable
     {
@@ -71,6 +72,20 @@ contract marketplace {
         if (publisherStake == 0) revert NotEnoughEther();
         publishersStakes[publisher] = 0;
         payable(msg.sender).transfer(publisherStake);
+    }
+
+    function increaseStake() public payable
+    {
+        if (publishersStakes[msg.sender] == 0) revert NotRegistered();
+        publishersStakes[msg.sender] += msg.value;
+    }
+
+    function decreaseStake(uint decrease) public payable
+    {
+        if (publishersStakes[msg.sender] == 0) revert NotRegistered();
+        if (publishersStakes[msg.sender] < decrease) revert NotEnoughEther();
+        publishersStakes[msg.sender] -= decrease;
+        payable(msg.sender).transfer(decrease);
     }
 
     function setOffer(string memory metadata, uint256 price, string memory sample, string memory data) public
@@ -186,7 +201,7 @@ contract marketplace {
         balance += amountSlashed;
     }
 
-    function depositPayment(uint256 offerId) public payable
+    function depositPayment(uint offerId) public payable
     {
         offer storage o = offers[offerId];
         if (o.isActive == false) revert OfferInactive();
@@ -200,11 +215,11 @@ contract marketplace {
         emit Deposit(msg.sender, offerId);
     }
 
-    function sendKey(uint256 offerId, address buyer, string memory key) public
+    function sendKey(uint offerId, address buyer, string memory key) public
     {
         offer storage o = offers[offerId];
         if (msg.sender != o.publisher) revert NotThePublisher();
-        uint256 purchaseId = o.getPurchaseId[buyer];
+        uint purchaseId = o.getPurchaseId[buyer];
         purchase storage p = o.purchases[purchaseId];
         p.key = key;
         uint deposit = p.deposit;
@@ -212,12 +227,17 @@ contract marketplace {
         payable(msg.sender).transfer(deposit);
     }
 
-    function readKey(uint256 offerId) public view returns(string memory)
+    function readKey(uint offerId) public view returns(string memory)
     {
         offer storage o = offers[offerId];
-        uint256 purchaseId = o.getPurchaseId[msg.sender];
+        uint purchaseId = o.getPurchaseId[msg.sender];
         purchase storage p = o.purchases[purchaseId];
         return p.key;
+    }
+
+    function returnDeposit(uint offerId) public
+    {
+
     }
 
 }
