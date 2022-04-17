@@ -211,7 +211,6 @@ contract marketplace {
         purchase storage p = o.purchases[o.purchasesSize++];
         p.buyer = msg.sender;
         p.timestamp = block.timestamp;
-        p.key = "no key";
         p.deposit = msg.value;
         o.getPurchaseId[msg.sender] = o.purchasesSize - 1;
         o.canReview[msg.sender] = true;
