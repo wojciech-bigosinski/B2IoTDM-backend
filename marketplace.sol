@@ -156,7 +156,7 @@ contract marketplace {
     function getOfferDataArray(uint offerId) public view returns(string[] memory)
     {
         offer storage o = offers[offerId];
-        return(o.reviews);
+        return(o.dataArray);
     }
 
     function writeReview(uint256 offerId, string memory review, uint rating) public checkIfCanReview(offerId)
