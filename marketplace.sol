@@ -214,7 +214,6 @@ contract marketplace {
         p.timestamp = block.timestamp;
         p.deposit = msg.value;
         o.getPurchaseId[msg.sender] = o.purchasesSize - 1;
-        o.canReview[msg.sender] = true;
         emit Deposit(msg.sender, offerId);
     }
 
@@ -225,6 +224,7 @@ contract marketplace {
         uint purchaseId = o.getPurchaseId[buyer];
         purchase storage p = o.purchases[purchaseId];
         p.key = key;
+        o.canReview[p.buyer] = true;
         uint deposit = p.deposit;
         p.deposit = 0;
         payable(msg.sender).transfer(deposit);
