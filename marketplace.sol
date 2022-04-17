@@ -60,7 +60,7 @@ contract marketplace {
 
     function registerPublisher(string memory publisherName) public payable
     {
-        if (msg.value < 1e15) revert NotEnoughEther();
+        if (msg.value < 10 gwei) revert NotEnoughEther();
         address publisher = msg.sender;
         publishersStakes[publisher] += msg.value;
         publishersNames[publisher] = publisherName;
@@ -91,7 +91,7 @@ contract marketplace {
 
     function setOffer(string memory metadata, uint256 price, string memory sample, string memory data) public
     {
-        if (publishersStakes[msg.sender] < (1e15 * publishersOffers[msg.sender] + 1e15)) revert NotEnoughStake();
+        if (publishersStakes[msg.sender] < (10 gwei * publishersOffers[msg.sender] + 10 gwei)) revert NotEnoughStake();
         offer storage o = offers[offersSize++];
         publishersOffers[msg.sender]++;
         string[] memory reviews;
@@ -114,6 +114,7 @@ contract marketplace {
     {
         offer storage o = offers[offerId];
         if (msg.sender != o.publisher) revert NotThePublisher();
+        publishersOffers[msg.sender] -= 1;
         o.isActive = false;
     }
 
