@@ -211,6 +211,7 @@ contract marketplace {
         purchase storage p = o.purchases[o.purchasesSize++];
         p.buyer = msg.sender;
         p.timestamp = block.timestamp;
+        p.key = "no key";
         p.deposit = msg.value;
         o.getPurchaseId[msg.sender] = o.purchasesSize - 1;
         o.canReview[msg.sender] = true;
@@ -243,10 +244,9 @@ contract marketplace {
         uint purchaseId = o.getPurchaseId[msg.sender];
         purchase storage p = o.purchases[purchaseId];
         if (p.buyer != msg.sender) revert NotBought();
-        if (block.timestamp <= (p.timestamp + 1 weeks)) revert NotEnoughTimePassed();
+        if (block.timestamp <= (p.timestamp + 1 minutes)) revert NotEnoughTimePassed();
         uint withdrawal = p.deposit;
         p.deposit = 0;
         payable(msg.sender).transfer(withdrawal);
     }
-
 }
