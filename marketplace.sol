@@ -81,7 +81,7 @@ contract marketplace {
         publishersStakes[msg.sender] += msg.value;
     }
 
-    function decreaseStake(uint decrease) public payable
+    function decreaseStake(uint decrease) public
     {
         if (publishersStakes[msg.sender] == 0) revert NotRegistered();
         if (publishersStakes[msg.sender] < decrease) revert NotEnoughEther();
