@@ -54,6 +54,7 @@ contract marketplace {
     error NotRegistered();
     error NotBought();
     error NotEnoughTimePassed();
+    error OutOfRange();
 
     event Deposit(address indexed buyer, uint indexed offerId);
 
@@ -161,6 +162,7 @@ contract marketplace {
 
     function writeReview(uint256 offerId, string memory review, uint rating) public checkIfCanReview(offerId)
     {
+        if (rating > 100) revert OutOfRange();
         offer storage o = offers[offerId];
         o.reviews.push(review);
         o.ratings.push(rating);
