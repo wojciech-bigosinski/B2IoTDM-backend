@@ -208,7 +208,7 @@ contract marketplace {
     {
         offer storage o = offers[offerId];
         if (o.isActive == false) revert OfferInactive();
-        if (msg.value <= o.price) revert NotEnoughEther();
+        if (msg.value < o.price) revert NotEnoughEther();
         purchase storage p = o.purchases[o.purchasesSize++];
         p.buyer = msg.sender;
         p.timestamp = block.timestamp;
