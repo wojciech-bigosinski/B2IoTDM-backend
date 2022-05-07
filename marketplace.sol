@@ -165,19 +165,11 @@ contract marketplace {
     {
         if (rating > 100) revert OutOfRange();
         offer storage o = offers[offerId];
-        o.reviews.push(review);
-        o.ratings.push(rating);
+        o.reviews.push(review); 
         publishersRating[o.publisher] = (publishersRating[o.publisher] * publishersNumberOfRatings[o.publisher] + rating) / (publishersNumberOfRatings[o.publisher] + 1);
         publishersNumberOfRatings[o.publisher]++;
-        if (o.ratings.length == 0)
-        {
-            o.rating = rating;
-        }
-        else
-        {
-            o.rating = (o.rating * o.ratings.length + rating) / (o.ratings.length + 1);
-        }
-
+        o.rating = (o.rating * o.ratings.length + rating) / (o.ratings.length + 1);
+        o.ratings.push(rating);
         checkPublisherScore(o.publisher);
         o.canReview[msg.sender] = false;
     }
